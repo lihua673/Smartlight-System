@@ -10,7 +10,7 @@ void Sensors_ReadAll(SensorData_t *out)
     if (HAL_GetTick() - last_tick >= 200)
     {
         last_tick = HAL_GetTick();
-        g_app.lux = bh_data_read();
+        g_app.lux = bh_data_read();  /* bh_data_read() 现在返回实际lux值 */
     }
 
     out->lux            = g_app.lux;

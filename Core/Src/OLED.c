@@ -35,8 +35,11 @@ void OLED_WriteCommand(uint8_t Command)
 {
     SoftI2C_Start(&oled_i2c);
     SoftI2C_SendByte(&oled_i2c, 0x78);
+    SoftI2C_WaitAck(&oled_i2c);
     SoftI2C_SendByte(&oled_i2c, 0x00);
+    SoftI2C_WaitAck(&oled_i2c);
     SoftI2C_SendByte(&oled_i2c, Command);
+    SoftI2C_WaitAck(&oled_i2c);
     SoftI2C_Stop(&oled_i2c);
 }
 
@@ -51,10 +54,13 @@ void OLED_WriteData(uint8_t *Data, uint8_t Count)
 
     SoftI2C_Start(&oled_i2c);
     SoftI2C_SendByte(&oled_i2c, 0x78);
+    SoftI2C_WaitAck(&oled_i2c);
     SoftI2C_SendByte(&oled_i2c, 0x40);
+    SoftI2C_WaitAck(&oled_i2c);
     for (i = 0; i < Count; i++)
     {
         SoftI2C_SendByte(&oled_i2c, Data[i]);
+        SoftI2C_WaitAck(&oled_i2c);
     }
     SoftI2C_Stop(&oled_i2c);
 }

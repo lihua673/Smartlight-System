@@ -2,9 +2,21 @@
 
 extern void Delay_us(uint32_t us);
 
-/* 初始化：总线空闲状态SCL、SDA均拉高 */
+/* 初始化：配置总线引脚并启用内部上拉（外部上拉仍需4.7kΩ更可靠） */
 void SoftI2C_Init(SoftI2C_Bus_t *bus)
 {
+    /* 使能内部上拉作为后备（外部4.7kΩ上拉电阻仍强烈建议） */
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitStruct.Pin   = bus->scl_pin;
+    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull  = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(bus->scl_port, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = bus->sda_pin;
+    HAL_GPIO_Init(bus->sda_port, &GPIO_InitStruct);
+
+    /* 总线空闲：SCL、SDA 均拉高 */
     SoftI2C_SDA_Out(bus);
     HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(bus->sda_port, bus->sda_pin, GPIO_PIN_SET);
@@ -15,6 +27,7 @@ void SoftI2C_Start(SoftI2C_Bus_t *bus)
 {
     SoftI2C_SDA_Out(bus);
     HAL_GPIO_WritePin(bus->sda_port, bus->sda_pin, GPIO_PIN_SET);
+    Delay_us(bus->delay_us);
     HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_SET);
     Delay_us(bus->delay_us);
     HAL_GPIO_WritePin(bus->sda_port, bus->sda_pin, GPIO_PIN_RESET);
@@ -35,7 +48,7 @@ void SoftI2C_Stop(SoftI2C_Bus_t *bus)
     Delay_us(bus->delay_us);
 }
 
-/* 发送一个字节，高位先行 */
+/* 发送一个字节（高位先行），调用者必须在之后调用 WaitAck 产生第9个时钟 */
 void SoftI2C_SendByte(SoftI2C_Bus_t *bus, uint8_t data)
 {
     uint8_t i;
@@ -45,11 +58,11 @@ void SoftI2C_SendByte(SoftI2C_Bus_t *bus, uint8_t data)
         HAL_GPIO_WritePin(bus->sda_port, bus->sda_pin,
             (data & 0x80) ? GPIO_PIN_SET : GPIO_PIN_RESET);
         data <<= 1;
-        Delay_us(2);
+        Delay_us(bus->delay_us);
         HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_SET);
-        Delay_us(2);
+        Delay_us(bus->delay_us);
         HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_RESET);
-        Delay_us(2);
+        Delay_us(bus->delay_us);
     }
 }
 
@@ -61,12 +74,13 @@ uint8_t SoftI2C_ReadByte(SoftI2C_Bus_t *bus, uint8_t ack)
     for (i = 0; i < 8; i++)
     {
         HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_RESET);
-        Delay_us(2);
+        Delay_us(bus->delay_us);
         HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_SET);
+        Delay_us(1);   /* 等待从机输出数据稳定 */
         receive <<= 1;
         if (HAL_GPIO_ReadPin(bus->sda_port, bus->sda_pin))
             receive++;
-        Delay_us(1);
+        Delay_us(bus->delay_us);
     }
     if (!ack)
         SoftI2C_NAck(bus);
@@ -75,10 +89,10 @@ uint8_t SoftI2C_ReadByte(SoftI2C_Bus_t *bus, uint8_t ack)
     return receive;
 }
 
-/* 等待从机ACK，超时返回1 */
+/* 等待从机ACK（产生第9个SCL时钟并读取SDA），超时返回1 */
 uint8_t SoftI2C_WaitAck(SoftI2C_Bus_t *bus)
 {
-    uint8_t err_cnt = 0;
+    uint16_t err_cnt = 0;
     SoftI2C_SDA_In(bus);
     HAL_GPIO_WritePin(bus->sda_port, bus->sda_pin, GPIO_PIN_SET);
     Delay_us(1);
@@ -87,7 +101,7 @@ uint8_t SoftI2C_WaitAck(SoftI2C_Bus_t *bus)
     while (HAL_GPIO_ReadPin(bus->sda_port, bus->sda_pin))
     {
         err_cnt++;
-        if (err_cnt > 250)
+        if (err_cnt > 1000)   /* 超时但不停机，返回失败 */
         {
             SoftI2C_Stop(bus);
             return 1;
@@ -103,9 +117,9 @@ void SoftI2C_Ack(SoftI2C_Bus_t *bus)
     HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_RESET);
     SoftI2C_SDA_Out(bus);
     HAL_GPIO_WritePin(bus->sda_port, bus->sda_pin, GPIO_PIN_RESET);
-    Delay_us(2);
+    Delay_us(bus->delay_us);
     HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_SET);
-    Delay_us(2);
+    Delay_us(bus->delay_us);
     HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_RESET);
 }
 
@@ -115,8 +129,8 @@ void SoftI2C_NAck(SoftI2C_Bus_t *bus)
     HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_RESET);
     SoftI2C_SDA_Out(bus);
     HAL_GPIO_WritePin(bus->sda_port, bus->sda_pin, GPIO_PIN_SET);
-    Delay_us(2);
+    Delay_us(bus->delay_us);
     HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_SET);
-    Delay_us(2);
+    Delay_us(bus->delay_us);
     HAL_GPIO_WritePin(bus->scl_port, bus->scl_pin, GPIO_PIN_RESET);
 }

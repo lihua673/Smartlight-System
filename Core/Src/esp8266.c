@@ -19,10 +19,6 @@ static inline void UART_SendStr(UART_HandleTypeDef *huart, const char *str) {
     HAL_UART_Transmit(huart, (uint8_t*)str, strlen(str), HAL_MAX_DELAY);
 }
 
-// 全局变量
-uint8_t usart2_rx_buf[128];        // 接收缓冲区
-uint16_t usart2_rx_len = 0;        // 实际收到字节数
-
 /* ESP8266初始化 */
 void ESP8266_Init()
 {

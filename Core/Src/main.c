@@ -110,6 +110,20 @@ int main(void)
 
 		/* 硬件初始化 */
 		HAL_UART_Receive_IT(&huart3, &rx_buf[0], 1);  // 雷达UART接收
+
+		/* 启动诊断：PC0闪3次 + 串口输出（确认MCU在运行） */
+		{
+			uint8_t blink;
+			const char *msg;
+			msg = "\r\n=== LED系统启动 ===\r\n";
+			HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+			for (blink = 0; blink < 3; blink++) {
+				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_0);
+				HAL_Delay(200);
+			}
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
+		}
+
 		OLED_Init();                                    // OLED初始化
 		LED_PWM_Init();                                 // PWM输出
 		BH1750_Init();                                  // 光照传感器

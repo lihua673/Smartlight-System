@@ -2,8 +2,6 @@
 #include "soft_i2c.h"
 #include "delay.h"
 
-typedef unsigned char BYTE;
-
 /* BH1750专用I2C总线实例 (PB6=SCL, PB7=SDA) */
 static SoftI2C_Bus_t bh1750_i2c = {
     .scl_port = GPIOB,
@@ -13,17 +11,20 @@ static SoftI2C_Bus_t bh1750_i2c = {
     .delay_us = 5
 };
 
-/* 通过统一I2C驱动发送单字节地址 */
+/* 写单字节寄存器（带ACK时钟） */
 void Single_Write_BH1750(uchar REG_Address)
 {
     SoftI2C_Start(&bh1750_i2c);
     SoftI2C_SendByte(&bh1750_i2c, BHAddWrite);
+    SoftI2C_WaitAck(&bh1750_i2c);
     SoftI2C_SendByte(&bh1750_i2c, REG_Address);
+    SoftI2C_WaitAck(&bh1750_i2c);
     SoftI2C_Stop(&bh1750_i2c);
 }
 
 void BH1750_Init(void)
 {
+    SoftI2C_Init(&bh1750_i2c);
     Single_Write_BH1750(0x01);
     bh_data_send(BHPowOn);   // BH1750上电
     bh_data_send(BHReset);   // BH1750复位
@@ -48,8 +49,8 @@ void bh_data_send(uint8_t command)
     } while (retry < 3);
 }
 
-/* 读取光照数据（带重试保护） */
-uint16_t bh_data_read(void)
+/* 读取光照数据（带重试保护），返回lux值 */
+float bh_data_read(void)
 {
     uint16_t buf;
     uint8_t retry = 0;
@@ -62,11 +63,12 @@ uint16_t bh_data_read(void)
             buf = buf << 8;
             buf += 0x00FF & SoftI2C_ReadByte(&bh1750_i2c, 0);
             SoftI2C_Stop(&bh1750_i2c);
-            return buf;
+            /* H2模式分辨率0.5lx，实际lux = raw / 1.2 */
+            return (float)buf / 1.2f;
         }
         SoftI2C_Stop(&bh1750_i2c);
         retry++;
     } while (retry < 3);
 
-    return 0;  // 读取失败返回0
+    return 0.0f;  /* 读取失败返回0 */
 }

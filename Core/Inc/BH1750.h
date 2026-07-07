@@ -27,6 +27,6 @@
 void Single_Write_BH1750(uchar REG_Address);
 void BH1750_Init(void);
 void bh_data_send(uint8_t command);
-uint16_t bh_data_read(void);
+float bh_data_read(void);
 
 #endif
