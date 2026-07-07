@@ -27,6 +27,7 @@
 #include "led_pwm.h"
 #include "esp8266.h"
 #include "ld2402_uart.h"
+#include "delay.h"
 #include <string.h>
 #include <stdio.h>
 /* USER CODE END Includes */
@@ -104,7 +105,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  Delay_Init();
   /* USER CODE END Init */
 
   /* Configure the system clock */

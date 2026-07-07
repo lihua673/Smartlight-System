@@ -5,6 +5,7 @@
 #include "OLED.h"
 #include "led_pwm.h"
 #include "wifi_config.h"
+#include "delay.h"
 
 extern char USART1_RX_BUF[1024];
 extern uint16_t USART1_RX_LEN;
@@ -17,8 +18,6 @@ extern uint8_t USART2_RX_FINISH;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
-
-extern void HAL_Delay_us(uint32_t us);
 
 // 安全的串口字符串发送函数（使用strlen替代不安全的sizeof宏）
 static inline void UART_SendStr(UART_HandleTypeDef *huart, const char *str) {
@@ -133,21 +132,21 @@ void MQTT_Init()
     USART2_RX_LEN = 0;
     memset(USART2_RX_BUF, 0, sizeof(USART2_RX_BUF));
     UART_SendStr(&huart1, "设置用户属性 \r\n");
-    HAL_Delay_us(200);
+    Delay_us(200);
     UART_SendStr(&huart2,
         "AT+MQTTUSERCFG=0,1,\"mytest\",\"ZIJxyYhSR6\",\"version=2018-10-31&res=products%2FZIJxyYhSR6%2Fdevices%2Fmytest&et=1909135998&method=md5&sign=v4Y%2B%2BoPTIzzRC%2BH8U4g%2Bnw%3D%3D\",0,0,\"\"\r\n");
 
     if (ESP_WaitResp("OK", 6000))
     {
         UART_SendStr(&huart1, "设置用户属性成功 \r\n");
-        HAL_Delay_us(200);
+        Delay_us(200);
         OLED_Clear();
         OLED_ShowString(1, 1, "OK");
     }
     else
     {
         UART_SendStr(&huart1, "设置用户属性失败 \r\n");
-        HAL_Delay_us(200);
+        Delay_us(200);
         OLED_Clear();
         OLED_ShowString(1, 1, "ERROR");
         HAL_Delay(500);
@@ -159,7 +158,7 @@ void MQTT_Init()
     USART2_RX_LEN = 0;
     memset(USART2_RX_BUF, 0, sizeof(USART2_RX_BUF));
     UART_SendStr(&huart1, "连接OneNET服务器 \r\n");
-    HAL_Delay_us(200);
+    Delay_us(200);
     UART_SendStr(&huart2, "AT+MQTTCONN=0,\"mqtts.heclouds.com\",1883,1\r\n");
 
     if (ESP_WaitResp("OK", 8000))
@@ -183,7 +182,7 @@ void MQTT_Init()
     memset(USART2_RX_BUF, 0, sizeof(USART2_RX_BUF));
     UART_SendStr(&huart1, "订阅\"设备属性上报响应\"主题 \r\n");
     UART_SendStr(&huart2, "AT+MQTTSUB=0,\"$sys/ZIJxyYhSR6/mytest/thing/property/post/reply\",0\r\n");
-    HAL_Delay_us(200);
+    Delay_us(200);
 
     if (ESP_WaitResp("OK", 6000))
     {
@@ -237,12 +236,12 @@ void MQTT_Publish_Data(int light_state)
     UART_SendStr(&huart1, "准备向云平台发送数据 \r\n");
 
     HAL_UART_Transmit(&huart2, (uint8_t *)at_cmd, strlen(at_cmd), HAL_MAX_DELAY);
-    HAL_Delay_us(200);
+    Delay_us(200);
     if (ESP_WaitResp(">", 6000))
     {
         UART_SendStr(&huart1, "准备发送数据成功 \r\n");
         HAL_Delay(5);
-        HAL_Delay_us(200);
+        Delay_us(200);
     }
     else
     {
@@ -256,7 +255,7 @@ void MQTT_Publish_Data(int light_state)
     memset(USART2_RX_BUF, 0, sizeof(USART2_RX_BUF));
 
     UART_SendStr(&huart1, "正在发送数据 \r\n");
-    HAL_Delay_us(200);
+    Delay_us(200);
     HAL_UART_Transmit(&huart2, (uint8_t *)data, data_len, HAL_MAX_DELAY);
 
     if (ESP_WaitResp("OK", 6000))
@@ -294,7 +293,7 @@ int8_t MQTT_Get_Data(char *name)
     // 数据完整，打印并解析
     UART_SendStr(&huart1, "成功接收到数据: \r\n");
     HAL_UART_Transmit(&huart1, (uint8_t *)USART2_RX_BUF, strlen(USART2_RX_BUF), HAL_MAX_DELAY);
-    HAL_Delay_us(20);
+    Delay_us(20);
 
     p_value += 8;  // 跳过 "value":
     while (*p_value == ' ' || *p_value == '\t')
