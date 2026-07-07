@@ -8,8 +8,8 @@ void Cloud_Init(void)
     ESP8266_Init();
     if (ESP8266_Init_Success)
     {
-        MQTT_Init();
-        g_app.mqtt_ready = 1;
+        if (MQTT_Init())
+            g_app.mqtt_ready = 1;
     }
 }
 
@@ -44,8 +44,8 @@ void Cloud_TryReconnect(void)
         ESP8266_Init();
         if (ESP8266_Init_Success)
         {
-            MQTT_Init();
-            g_app.mqtt_ready = 1;
+            if (MQTT_Init())
+                g_app.mqtt_ready = 1;
         }
     }
 }

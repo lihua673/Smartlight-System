@@ -116,7 +116,7 @@ void ESP8266_Init()
 }
 
 /* MQTT初始化函数 */
-void MQTT_Init()
+uint8_t MQTT_Init()
 {
     /* 1: 设置用户属性 */
     USART2_RX_LEN = 0;
@@ -140,7 +140,7 @@ void MQTT_Init()
         OLED_Clear();
         OLED_ShowString(1, 1, "ERROR");
         HAL_Delay(500);
-        return;
+        return 0;
     }
 
     /* 2: 连接OneNET服务器 */
@@ -163,7 +163,7 @@ void MQTT_Init()
         OLED_Clear();
         OLED_ShowString(1, 1, "ERROR");
         HAL_Delay(500);
-        return;
+        return 0;
     }
 
     /* 3: 订阅主题 */
@@ -186,7 +186,7 @@ void MQTT_Init()
         OLED_Clear();
         OLED_ShowString(1, 1, "ERROR");
         HAL_Delay(500);
-        return;
+        return 0;
     }
 
     HAL_Delay(1000);
@@ -207,10 +207,11 @@ void MQTT_Init()
         OLED_Clear();
         OLED_ShowString(1, 1, "AT+MQTTSUB:ERROR");
         HAL_Delay(500);
-        return;
+        return 0;
     }
     USART2_RX_LEN = 0;
     memset(USART2_RX_BUF, 0, sizeof(USART2_RX_BUF));
+    return 1;  /* 全部步骤成功 */
 }
 
 void MQTT_Publish_Data(int light_state)
