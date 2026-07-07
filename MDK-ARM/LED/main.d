@@ -33,9 +33,13 @@ led\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
 led\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
 led\main.o: ../Core/Inc/stm32f4xx_it.h
 led\main.o: ../Core/Inc/OLED.h
-led\main.o: ../Core/Inc/BH1750.h
 led\main.o: ../Core/Inc/led_pwm.h
-led\main.o: ../Core/Inc/esp8266.h
 led\main.o: ../Core/Inc/ld2402_uart.h
+led\main.o: ../Core/Inc/delay.h
+led\main.o: ../Core/Inc/app_state.h
+led\main.o: ../Core/Inc/BH1750.h
+led\main.o: ../Core/Inc/sensors.h
+led\main.o: ../Core/Inc/light_controller.h
+led\main.o: ../Core/Inc/cloud_comm.h
 led\main.o: D:\keil5\ARM\ARMCC\Bin\..\include\string.h
 led\main.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdio.h

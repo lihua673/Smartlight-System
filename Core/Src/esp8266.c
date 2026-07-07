@@ -174,7 +174,7 @@ void MQTT_Init()
     HAL_Delay(1000);
     USART2_RX_LEN = 0;
     memset(USART2_RX_BUF, 0, sizeof(USART2_RX_BUF));
-    UART_SendStr(&huart1, "订阅\"设备属性上报响应\"主题 \r\n");
+    UART_SendStr(&huart1, "订阅'设备属性上报响应'主题 \r\n");
     UART_SendStr(&huart2, "AT+MQTTSUB=0,\"$sys/ZIJxyYhSR6/mytest/thing/property/post/reply\",0\r\n");
     Delay_us(200);
 
@@ -196,7 +196,7 @@ void MQTT_Init()
     HAL_Delay(1000);
     USART2_RX_LEN = 0;
     memset(USART2_RX_BUF, 0, sizeof(USART2_RX_BUF));
-    UART_SendStr(&huart1, "订阅\"设备属性设置请求\"主题 \r\n");
+    UART_SendStr(&huart1, "订阅'设备属性设置请求'主题 \r\n");
     UART_SendStr(&huart2, "AT+MQTTSUB=0,\"$sys/ZIJxyYhSR6/mytest/thing/property/set\",0\r\n");
 
     if (ESP_WaitResp("OK", 6000))

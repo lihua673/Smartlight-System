@@ -33,4 +33,5 @@ led\oled.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
 led\oled.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
 led\oled.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
 led\oled.o: ../Core/Inc/OLED_Font.h
-led\oled.o: ../Core/Inc/BH1750.h
+led\oled.o: ../Core/Inc/soft_i2c.h
+led\oled.o: ../Core/Inc/delay.h

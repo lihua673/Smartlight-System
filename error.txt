@@ -1,0 +1,54 @@
+Build started: Project: LED
+*** Using Compiler 'V5.06 update 7 (build 960)', folder: 'D:\keil5\ARM\ARMCC\Bin'
+Build target 'LED'
+compiling app_state.c...
+..\Core\Src\app_state.c(10): error:  #136: struct "<unnamed>"  has no field "g_app"
+      .last_publish_tick = 0
+..\Core\Src\app_state.c: 0 warnings, 1 error
+compiling esp8266.c...
+..\Core\Src\esp8266.c(128): warning:  #870-D: invalid multibyte character sequence
+      UART_SendStr(&huart1, "璁剧疆鐢ㄦ埛灞炴€? \r\n");
+..\Core\Src\esp8266.c(135): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "璁剧疆鐢ㄦ埛灞炴€ф垚鍔? \r\n");
+..\Core\Src\esp8266.c(142): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "璁剧疆鐢ㄦ埛灞炴€уけ璐? \r\n");
+..\Core\Src\esp8266.c(154): warning:  #870-D: invalid multibyte character sequence
+      UART_SendStr(&huart1, "杩炴帴OneNET鏈嶅姟鍣? \r\n");
+..\Core\Src\esp8266.c(160): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "OneNET鏈嶅姟鍣ㄨ繛鎺ユ垚鍔? \r\n");
+..\Core\Src\esp8266.c(166): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "OneNET鏈嶅姟鍣ㄨ繛鎺ュけ璐? \r\n");
+..\Core\Src\esp8266.c(177): error:  #18: expected a ")"
+      UART_SendStr(&huart1, "璁㈤槄\"璁惧灞炴€т笂鎶ュ搷搴擻"涓婚 \r\n");
+..\Core\Src\esp8266.c(177): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "璁㈤槄\"璁惧灞炴€т笂鎶ュ搷搴擻"涓婚 \r\n");
+..\Core\Src\esp8266.c(177): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "璁㈤槄\"璁惧灞炴€т笂鎶ュ搷搴擻"涓婚 \r\n");
+..\Core\Src\esp8266.c(177): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "璁㈤槄\"璁惧灞炴€т笂鎶ュ搷搴擻"涓婚 \r\n");
+..\Core\Src\esp8266.c(177): error:  #8: missing closing quote
+      UART_SendStr(&huart1, "璁㈤槄\"璁惧灞炴€т笂鎶ュ搷搴擻"涓婚 \r\n");
+..\Core\Src\esp8266.c(199): error:  #18: expected a ")"
+      UART_SendStr(&huart1, "璁㈤槄\"璁惧灞炴€ц缃姹俓"涓婚 \r\n");
+..\Core\Src\esp8266.c(199): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "璁㈤槄\"璁惧灞炴€ц缃姹俓"涓婚 \r\n");
+..\Core\Src\esp8266.c(199): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "璁㈤槄\"璁惧灞炴€ц缃姹俓"涓婚 \r\n");
+..\Core\Src\esp8266.c(199): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "璁㈤槄\"璁惧灞炴€ц缃姹俓"涓婚 \r\n");
+..\Core\Src\esp8266.c(199): error:  #8: missing closing quote
+      UART_SendStr(&huart1, "璁㈤槄\"璁惧灞炴€ц缃姹俓"涓婚 \r\n");
+..\Core\Src\esp8266.c(230): warning:  #870-D: invalid multibyte character sequence
+      UART_SendStr(&huart1, "鍑嗗鍚戜簯骞冲彴鍙戦€佹暟鎹? \r\n");
+..\Core\Src\esp8266.c(236): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "鍑嗗鍙戦€佹暟鎹垚鍔? \r\n");
+..\Core\Src\esp8266.c(242): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "鍑嗗鍙戦€佹暟鎹け璐? \r\n");
+..\Core\Src\esp8266.c(251): warning:  #870-D: invalid multibyte character sequence
+      UART_SendStr(&huart1, "姝ｅ湪鍙戦€佹暟鎹? \r\n");
+..\Core\Src\esp8266.c(288): warning:  #870-D: invalid multibyte character sequence
+      UART_SendStr(&huart1, "鎴愬姛鎺ユ敹鍒版暟鎹?: \r\n");
+..\Core\Src\esp8266.c: 11 warnings, 10 errors
+"LED\LED.axf" - 11 Error(s), 11 Warning(s).
+Target not created.
+Build Time Elapsed:  00:00:02

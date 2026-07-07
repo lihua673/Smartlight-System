@@ -1,4 +1,5 @@
 led\ld2402_uart.o: ..\Core\Src\ld2402_uart.c
+led\ld2402_uart.o: ../Core/Inc/app_state.h
 led\ld2402_uart.o: ../Core/Inc/ld2402_uart.h
 led\ld2402_uart.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h
 led\ld2402_uart.o: ../Core/Inc/stm32f4xx_hal_conf.h

@@ -27,89 +27,55 @@ Project File Date:  07/07/2026
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'D:\keil5\ARM\ARMCC\Bin'
 Build target 'LED'
-assembling startup_stm32f407xx.s...
-compiling ld2402_uart.c...
-compiling BH1750.c...
-compiling stm32f4xx_hal_msp.c...
+compiling app_state.c...
+..\Core\Src\app_state.c(10): error:  #136: struct "<unnamed>"  has no field "g_app"
+      .last_publish_tick = 0
+..\Core\Src\app_state.c: 0 warnings, 1 error
 compiling esp8266.c...
-..\Core\Src\esp8266.c(164): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "设置用户属�? \r\n");
-..\Core\Src\esp8266.c(164): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "设置用户属�? \r\n");
-..\Core\Src\esp8266.c(174): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "设置用户属性成�? \r\n");
-..\Core\Src\esp8266.c(174): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "设置用户属性成�? \r\n");
-..\Core\Src\esp8266.c(181): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "设置用户属性失�? \r\n");
-..\Core\Src\esp8266.c(181): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "设置用户属性失�? \r\n");
-..\Core\Src\esp8266.c(193): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "连接OneNET服务�? \r\n");
-..\Core\Src\esp8266.c(193): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "连接OneNET服务�? \r\n");
-..\Core\Src\esp8266.c(202): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "OneNET服务器连接成�? \r\n");
-..\Core\Src\esp8266.c(202): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "OneNET服务器连接成�? \r\n");
-..\Core\Src\esp8266.c(208): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "OneNET服务器连接失�? \r\n");
-..\Core\Src\esp8266.c(208): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "OneNET服务器连接失�? \r\n");
-..\Core\Src\esp8266.c(219): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "订阅“设备属性上报响应”主�? \r\n");
-..\Core\Src\esp8266.c(219): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "订阅“设备属性上报响应”主�? \r\n");
-..\Core\Src\esp8266.c(243): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "订阅“设备属性设置请求”主�? \r\n");
-..\Core\Src\esp8266.c(243): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "订阅“设备属性设置请求”主�? \r\n");
-..\Core\Src\esp8266.c(275): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "准备向云平台发送数�? \r\n");
-..\Core\Src\esp8266.c(275): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "准备向云平台发送数�? \r\n");
-..\Core\Src\esp8266.c(281): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "准备发送数据成�? \r\n");		HAL_Delay(5);
-..\Core\Src\esp8266.c(281): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "准备发送数据成�? \r\n");		HAL_Delay(5);
-..\Core\Src\esp8266.c(287): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "准备发送数据失�? \r\n");
-..\Core\Src\esp8266.c(287): warning:  #870-D: invalid multibyte character sequence
-  		UART_SEND(&huart1, "准备发送数据失�? \r\n");
-..\Core\Src\esp8266.c(296): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "正在发送数�? \r\n");
-..\Core\Src\esp8266.c(296): warning:  #870-D: invalid multibyte character sequence
-  	UART_SEND(&huart1, "正在发送数�? \r\n");
-..\Core\Src\esp8266.c(345): warning:  #870-D: invalid multibyte character sequence
-      UART_SEND(&huart1, "成功接收到数�?: \r\n");
-..\Core\Src\esp8266.c(345): warning:  #870-D: invalid multibyte character sequence
-      UART_SEND(&huart1, "成功接收到数�?: \r\n");
-..\Core\Src\esp8266.c: 26 warnings, 0 errors
-compiling stm32f4xx_it.c...
-compiling OLED.c...
-compiling led_pwm.c...
-compiling stm32f4xx_hal_rcc_ex.c...
-compiling main.c...
-compiling stm32f4xx_hal_rcc.c...
-compiling stm32f4xx_hal_tim_ex.c...
-compiling stm32f4xx_hal_tim.c...
-compiling stm32f4xx_hal_pwr_ex.c...
-compiling stm32f4xx_hal_flash_ramfunc.c...
-compiling stm32f4xx_hal_dma.c...
-compiling stm32f4xx_hal_flash.c...
-compiling stm32f4xx_hal_cortex.c...
-compiling stm32f4xx_hal_gpio.c...
-compiling stm32f4xx_hal_flash_ex.c...
-compiling stm32f4xx_hal_exti.c...
-compiling stm32f4xx_hal_pwr.c...
-compiling stm32f4xx_hal.c...
-compiling stm32f4xx_hal_dma_ex.c...
-compiling stm32f4xx_hal_uart.c...
-compiling system_stm32f4xx.c...
-linking...
-Program Size: Code=13374 RO-data=2566 RW-data=56 ZI-data=3008  
-FromELF: creating hex file...
-"LED\LED.axf" - 0 Error(s), 26 Warning(s).
+..\Core\Src\esp8266.c(128): warning:  #870-D: invalid multibyte character sequence
+      UART_SendStr(&huart1, "设置用户属�? \r\n");
+..\Core\Src\esp8266.c(135): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "设置用户属性成�? \r\n");
+..\Core\Src\esp8266.c(142): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "设置用户属性失�? \r\n");
+..\Core\Src\esp8266.c(154): warning:  #870-D: invalid multibyte character sequence
+      UART_SendStr(&huart1, "连接OneNET服务�? \r\n");
+..\Core\Src\esp8266.c(160): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "OneNET服务器连接成�? \r\n");
+..\Core\Src\esp8266.c(166): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "OneNET服务器连接失�? \r\n");
+..\Core\Src\esp8266.c(177): error:  #18: expected a ")"
+      UART_SendStr(&huart1, "订阅\"设备属性上报响应\"主题 \r\n");
+..\Core\Src\esp8266.c(177): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "订阅\"设备属性上报响应\"主题 \r\n");
+..\Core\Src\esp8266.c(177): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "订阅\"设备属性上报响应\"主题 \r\n");
+..\Core\Src\esp8266.c(177): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "订阅\"设备属性上报响应\"主题 \r\n");
+..\Core\Src\esp8266.c(177): error:  #8: missing closing quote
+      UART_SendStr(&huart1, "订阅\"设备属性上报响应\"主题 \r\n");
+..\Core\Src\esp8266.c(199): error:  #18: expected a ")"
+      UART_SendStr(&huart1, "订阅\"设备属性设置请求\"主题 \r\n");
+..\Core\Src\esp8266.c(199): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "订阅\"设备属性设置请求\"主题 \r\n");
+..\Core\Src\esp8266.c(199): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "订阅\"设备属性设置请求\"主题 \r\n");
+..\Core\Src\esp8266.c(199): error:  #7: unrecognized token
+      UART_SendStr(&huart1, "订阅\"设备属性设置请求\"主题 \r\n");
+..\Core\Src\esp8266.c(199): error:  #8: missing closing quote
+      UART_SendStr(&huart1, "订阅\"设备属性设置请求\"主题 \r\n");
+..\Core\Src\esp8266.c(230): warning:  #870-D: invalid multibyte character sequence
+      UART_SendStr(&huart1, "准备向云平台发送数�? \r\n");
+..\Core\Src\esp8266.c(236): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "准备发送数据成�? \r\n");
+..\Core\Src\esp8266.c(242): warning:  #870-D: invalid multibyte character sequence
+          UART_SendStr(&huart1, "准备发送数据失�? \r\n");
+..\Core\Src\esp8266.c(251): warning:  #870-D: invalid multibyte character sequence
+      UART_SendStr(&huart1, "正在发送数�? \r\n");
+..\Core\Src\esp8266.c(288): warning:  #870-D: invalid multibyte character sequence
+      UART_SendStr(&huart1, "成功接收到数�?: \r\n");
+..\Core\Src\esp8266.c: 11 warnings, 10 errors
+"LED\LED.axf" - 11 Error(s), 11 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -132,7 +98,8 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE:5.4.0
       Include file:  CMSIS\Core\Include\tz_context.h
-Build Time Elapsed:  00:00:09
+Target not created.
+Build Time Elapsed:  00:00:02
 </pre>
 </body>
 </html>
