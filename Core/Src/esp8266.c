@@ -5,15 +5,10 @@
 #include "OLED.h"
 #include "led_pwm.h"
 #include "wifi_config.h"
+#include "app_state.h"
 #include "delay.h"
 
-extern char USART1_RX_BUF[1024];
-extern uint16_t USART1_RX_LEN;
-extern uint8_t USART1_RX_FINISH;
 
-extern char USART2_RX_BUF[1024];
-extern uint16_t USART2_RX_LEN;
-extern uint8_t USART2_RX_FINISH;
 
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
@@ -25,7 +20,6 @@ static inline void UART_SendStr(UART_HandleTypeDef *huart, const char *str) {
 }
 
 // 全局变量
-uint8_t ESP8266_Init_Success = 0;  // esp-01s初始化成功标志位
 uint8_t usart2_rx_buf[128];        // 接收缓冲区
 uint16_t usart2_rx_len = 0;        // 实际收到字节数
 

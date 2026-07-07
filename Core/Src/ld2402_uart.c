@@ -1,3 +1,4 @@
+#include "app_state.h"
 #include "ld2402_uart.h"
 #include <string.h>
 #include <stdio.h>
@@ -6,16 +7,7 @@
 #include "led_pwm.h"
 #define RX_TIMEOUT_MS  180   // 超过180ms无新字节视为帧结束
 
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
-
-// 雷达全局状态
-LD2402_Data_t ld24_data = 
-{
-    .human_state = HUMAN_NONE,
-    .distance = 0
-};
 
 // 接收缓冲区
 uint8_t rx_buf[64];

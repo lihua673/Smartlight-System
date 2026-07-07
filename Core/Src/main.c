@@ -28,6 +28,7 @@
 #include "esp8266.h"
 #include "ld2402_uart.h"
 #include "delay.h"
+#include "app_state.h"
 #include <string.h>
 #include <stdio.h>
 /* USER CODE END Includes */
@@ -70,24 +71,6 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-// 各传感器状态
-float g_lux = 0;                 // BH1750 光照值(lux)
-uint8_t g_face_detected = 0;     // K210 人脸识别标志
-uint16_t g_led_duty = 0;         // 当前实际PWM占空比
-
-char USART1_RX_BUF[1024] = {0};
-uint16_t USART1_RX_LEN = 0;
-uint8_t USART1_RX_FINISH = 0;
-
-char USART2_RX_BUF[1024] = {0};
-uint16_t USART2_RX_LEN = 0;
-uint8_t USART2_RX_FINISH = 0;
-
-uint32_t last_publish_tick = 0;  // 记录上次上传时间
-/* USER CODE END 0 */
-
 /**
   * @brief  The application entry point.
   * @retval int

@@ -13,7 +13,6 @@ typedef struct {
   uint16_t distance;
 } LD2402_Data_t;
 
-extern LD2402_Data_t ld24_data;
 extern uint8_t rx_buf[64];
 extern uint8_t rx_idx;
 
