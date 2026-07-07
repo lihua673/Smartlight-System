@@ -326,6 +326,7 @@ uint8_t ESP_WaitResp(char *wait_str, uint16_t timeout_ms)
     while ((HAL_GetTick() - start_tick) < timeout_ms)
     {
         ESP8266_PollReceive();
+        IWDG->KR = 0xAAAA;  /* 长等待期间喂狗，防止看门狗复位 */
 
         if (strstr(USART2_RX_BUF, wait_str) != NULL)
         {

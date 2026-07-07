@@ -128,16 +128,16 @@ int main(void)
 		LED_PWM_Init();                                 // PWM输出
 		BH1750_Init();                                  // 光照传感器
 
-		/* 独立看门狗初始化（~2s超时） */
+		/* 云端连接（耗时长，IWDG必须在之后启动否则超时复位） */
+		Cloud_Init();
+
+		/* 独立看门狗初始化（~4s超时，主循环喂狗） */
 		RCC->CSR |= RCC_CSR_LSION;          // 启用LSI
 		while (!(RCC->CSR & RCC_CSR_LSIRDY)); // 等待LSI就绪
 		IWDG->KR = 0x5555;    // 解除写保护
 		IWDG->PR = 0x04;      // 64分频, LSI=32kHz -> 500Hz
-		IWDG->RLR = 1000;     // 1000 ticks -> 2s超时
+		IWDG->RLR = 2000;     // 2000 ticks -> 4s超时（留余量给重连）
 		IWDG->KR = 0xCCCC;    // 启动IWDG
-
-		/* 云端连接 */
-		Cloud_Init();
 
 		/* 主循环 */
 		while (1)
