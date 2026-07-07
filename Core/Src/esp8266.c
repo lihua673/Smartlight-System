@@ -149,7 +149,7 @@ uint8_t MQTT_Init()
     memset(USART2_RX_BUF, 0, sizeof(USART2_RX_BUF));
     UART_SendStr(&huart1, "连接OneNET服务器 \r\n");
     Delay_us(200);
-    UART_SendStr(&huart2, "AT+MQTTCONN=0,\"mqtts.heclouds.com\",1883,1\r\n");
+    UART_SendStr(&huart2, "AT+MQTTCONN=0,\"iot-open.one-net.com.cn\",1883,1\r\n");
 
     if (ESP_WaitResp("OK", 8000))
     {
