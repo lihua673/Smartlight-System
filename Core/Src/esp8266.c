@@ -124,7 +124,7 @@ uint8_t MQTT_Init()
     UART_SendStr(&huart1, "设置用户属性 \r\n");
     Delay_us(200);
     UART_SendStr(&huart2,
-        "AT+MQTTUSERCFG=0,1,\"mytest\",\"ZIJxyYhSR6\",\"version=2018-10-31&res=products%2FZIJxyYhSR6%2Fdevices%2Fmytest&et=1909135998&method=md5&sign=VqMGZ5sbQoSciex%2BHt%2FHew%3D%3D\",0,0,\"\"\r\n");
+        "AT+MQTTUSERCFG=0,1,\"mytest\",\"ZIJxyYhSR6\",\"version=2018-10-31&res=products%2FZIJxyYhSR6%2Fdevices%2Fmytest&et=1909135998&method=md5&sign=pF1rIkPvt01A6fEi6bzJMA%3D%3D\",0,0,\"\"\r\n");
 
     if (ESP_WaitResp("OK", 6000))
     {
@@ -149,7 +149,7 @@ uint8_t MQTT_Init()
     memset(USART2_RX_BUF, 0, sizeof(USART2_RX_BUF));
     UART_SendStr(&huart1, "连接OneNET服务器 \r\n");
     Delay_us(200);
-    UART_SendStr(&huart2, "AT+MQTTCONN=0,\"183.230.40.96\",1883,1\r\n");
+    UART_SendStr(&huart2, "AT+MQTTCONN=0,\"mqtts.heclouds.com\",1883,1\r\n");
 
     if (ESP_WaitResp("OK", 8000))
     {
