@@ -124,7 +124,7 @@ uint8_t MQTT_Init()
     UART_SendStr(&huart1, "设置用户属性 \r\n");
     Delay_us(200);
     UART_SendStr(&huart2,
-        "AT+MQTTUSERCFG=0,1,\"mytest\",\"ZIJxyYhSR6\",\"version=2018-10-31&res=products%2FZIJxyYhSR6%2Fdevices%2Fmytest&et=1909135998&method=md5&sign=QkI1LracTO42Ptdtazqg7g%3D%3D\",0,0,\"\"\r\n");
+        "AT+MQTTUSERCFG=0,1,\"ZIJxyYhSR6&mytest\",\"ZIJxyYhSR6&mytest\",\"version=2018-10-31&res=products%2FZIJxyYhSR6%2Fdevices%2Fmytest&et=1909135998&method=md5&sign=QkI1LracTO42Ptdtazqg7g%3D%3D\",0,0,\"\"\r\n");
 
     if (ESP_WaitResp("OK", 6000))
     {
