@@ -5,7 +5,6 @@
  
 /***************根据自己需求更改****************/
 //BH1750引脚宏定义
-#define      BH1750_GPIO_CLK                	RCC_APB2Periph_GPIOB
 #define      BH1750_GPIO_PORT                 	GPIOB
 #define      BH1750_SCL_GPIO_PIN            	GPIO_PIN_6
 #define      BH1750_SDA_GPIO_PIN               	GPIO_PIN_7

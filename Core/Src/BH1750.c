@@ -59,27 +59,18 @@ void SDA_IN(void)
  
 void Single_Write_BH1750(uchar REG_Address)
 {
-   BH1750_IIC_Start();                  //起始信号
-   BH1750_IIC_Send_Byte(BHAddWrite);   //发送设备地址+写信号
-   BH1750_IIC_Send_Byte(REG_Address);    //内部寄存器地址，
-  //  BH1750_SendByte(REG_data); 	//内部寄存器数据，
-   BH1750_IIC_Stop();                   //发送停止信号
+   BH1750_IIC_Start();
+   BH1750_IIC_Send_Byte(BHAddWrite);
+   BH1750_IIC_Send_Byte(REG_Address);
+   BH1750_IIC_Stop();
 }
  
 void BH1750_Init(void)
 {
-//	GPIO_InitTypeDef  GPIO_InitStructure;
- 
-//	GPIO_InitStructure.Pin = BH1750_SCL_GPIO_PIN|BH1750_SDA_GPIO_PIN;	 
-// 	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP; 		 //推挽输出
-//	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;//速度50MHz
-// 	HAL_GPIO_Init(BH1750_GPIO_PORT, &GPIO_InitStructure);	  //初始化GPIOD3,6
-// 	HAL_GPIO_WritePin(BH1750_GPIO_PORT,BH1750_SCL_GPIO_PIN|BH1750_SDA_GPIO_PIN,1);	
- 
 	Single_Write_BH1750(0x01);
-	bh_data_send(BHPowOn);  //BH1750上电
-	bh_data_send(BHReset);	//BH1750复位
-	bh_data_send(BHModeH2); //BH1750写入测量模式：选择的是分辨率是4lx，测量时间是16ms的
+	bh_data_send(BHPowOn);   // BH1750上电
+	bh_data_send(BHReset);   // BH1750复位
+	bh_data_send(BHModeH2);  // BH1750高分辨率模式2: 0.5lx, 120ms
 }
  
 //产生IIC起始信号

@@ -1,0 +1,15 @@
+# WiFi凭据（含密码，禁止提交）
+Core/Inc/wifi_config.h
+
+# Keil MDK 生成文件
+MDK-ARM/*.uvguix.*
+MDK-ARM/*.uvoptx
+MDK-ARM/*.lst
+MDK-ARM/*.scvd
+MDK-ARM/DebugConfig/
+MDK-ARM/RTE/
+MDK-ARM/Objects/
+MDK-ARM/Listings/
+
+# CubeMX 临时文件
+.mxproject

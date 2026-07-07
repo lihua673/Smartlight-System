@@ -76,15 +76,15 @@ float g_lux = 0;                 // BH1750 光照值(lux)
 uint8_t g_face_detected = 0;     // K210 人脸识别标志
 uint16_t g_led_duty = 0;         // 当前实际PWM占空比
 
-char USART1_RX_BUF[1024]={0};
-uint16_t USART1_RX_LEN=0;
-uint8_t USART1_RX_FINISH=0;
+char USART1_RX_BUF[1024] = {0};
+uint16_t USART1_RX_LEN = 0;
+uint8_t USART1_RX_FINISH = 0;
 
-char USART2_RX_BUF[1024]={0};
-uint16_t USART2_RX_LEN=0;
-uint8_t USART2_RX_FINISH=0;
+char USART2_RX_BUF[1024] = {0};
+uint16_t USART2_RX_LEN = 0;
+uint8_t USART2_RX_FINISH = 0;
 
-uint32_t last_publish_time = 0;   // 记录上次上传时间
+uint32_t last_publish_tick = 0;  // 记录上次上传时间
 /* USER CODE END 0 */
 
 /**
@@ -121,115 +121,76 @@ int main(void)
   MX_TIM3_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-	
-	
-	HAL_UART_Receive_IT(&huart3, &rx_buf[0], 1);		//雷达
-	OLED_Init();		//OLED初始化
-	LED_PWM_Init();		//pwm灯泡输出
-	BH1750_Init();   // 光照传感器
 
-	
-	ESP8266_Init();
-	if(ESP8266_Init_Success)
-	{
-		MQTT_Init();
-		// 记录当前时间作为起始点
-		//HAL_UART_Receive_IT(&huart2, usart2_rx_buf, 1);			//wifi-it
-		//HAL_TIM_Base_Start_IT(&htim6);
-    last_publish_time = HAL_GetTick();
-	}
+		HAL_UART_Receive_IT(&huart3, &rx_buf[0], 1);  // 雷达
+		OLED_Init();                                    // OLED初始化
+		LED_PWM_Init();                                 // PWM灯泡输出
+		BH1750_Init();                                  // 光照传感器
+
+		ESP8266_Init();
+		if (ESP8266_Init_Success)
+		{
+			MQTT_Init();
+	    last_publish_tick = HAL_GetTick();
+		}
+
 		while (1)
-{
-    // --- 1. 轮询ESP8266接收（必须保持）---
-    ESP8266_PollReceive();
-    LD2402_ParseData();   // 解析雷达最新状态（非阻塞）
+		{
+	    // 1. 轮询ESP8266接收 + 雷达数据解析（非阻塞）
+	    ESP8266_PollReceive();
+	    LD2402_ParseData();
 
-    // --- 2. 每200ms刷新各传感器（非严格，用GetTick实现）---
-    static uint32_t last_sensor_tick = 0;
-    if (HAL_GetTick() - last_sensor_tick >= 200)
-    {
-        last_sensor_tick = HAL_GetTick();
+	    // 2. 每200ms刷新传感器数据
+	    static uint32_t last_sensor_tick = 0;
+	    if (HAL_GetTick() - last_sensor_tick >= 200)
+	    {
+	        last_sensor_tick = HAL_GetTick();
+	        g_lux = bh_data_read();
+	        // ld24_data.xxx 和 g_face_detected 由中断/parse更新
+	    }
 
-        // 2a. 读取光照
-        g_lux = bh_data_read();
+	    // 3. 计算目标亮度
+	    uint16_t base_duty = 0;
+	    if (g_lux < 80)          base_duty = 999 * 70 / 100;
+	    else if (g_lux < 120)    base_duty = 999 * 50 / 100;
+	    else if (g_lux < 170)    base_duty = 999 * 30 / 100;
+	    else                     base_duty = 0;
 
-        // 2b. 读取雷达距离及状态（已由中断和parse更新）
-        // ld24_data.xxx 已更新
+	    // 雷达检测到人且有人脸时额外增加30%
+	    uint16_t extra_duty = 0;
+	    if (ld24_data.human_state != HUMAN_NONE && g_face_detected)
+	    {
+	        extra_duty = 999 * 30 / 100;
+	    }
 
-        // 2c. 读取K210人脸标志（已在中断中更新）
-        // g_face_detected 已更新
-    }
+	    uint16_t target_duty = base_duty + extra_duty;
+	    if (target_duty > 999) target_duty = 999;
 
-    // --- 3. 计算目标亮度 ---
-    uint16_t base_duty = 0;
-    // 根据光照确定基础亮度
-    if (g_lux < 80)          base_duty = 999 * 70 / 100;
-    else if (g_lux < 120)    base_duty = 999 * 50 / 100;
-    else if (g_lux < 170)    base_duty = 999 * 30 / 100;
-    else                     base_duty = 0 ;  // 或0
+	    // 仅在亮度变化时设置PWM
+	    if (target_duty != g_led_duty)
+	    {
+	        g_led_duty = target_duty;
+	        LED_SetBrightness(g_led_duty);
+	    }
 
-    // 如果雷达检测到人 且 有人脸，额外增加30%
-		//k210不全额外 亮度还没有
-    uint16_t extra_duty = 0;
-    if (ld24_data.human_state != HUMAN_NONE && g_face_detected)
-    {
-        extra_duty = 999 * 30 / 100;
-    }
-
-    uint16_t target_duty = base_duty + extra_duty;
-    if (target_duty > 999) target_duty = 999;
-
-    // 设置LED（仅在变化时设置，减少PWM配置次数）
-    if (target_duty != g_led_duty)
-    {
-        g_led_duty = target_duty;
-        LED_SetBrightness(g_led_duty);
-    }
-
-    // --- 4. 定时上传亮度到云端（每20秒）---
-    static uint32_t last_publish_tick = 0;
-    if (HAL_GetTick() - last_publish_tick >= 20000)
-    {
-        last_publish_tick = HAL_GetTick();
-			// 上传时：
-				uint8_t percent = g_led_duty * 100 / 990;   // 0~999 → 0~100
-				MQTT_Publish_Data(percent);
-
-			// 注意：你现在MQTT_Publish_Data内部有固定值40，需改为传入参数
-    }
-
-    // --- 5. 处理云端下发的指令（若有）---
-//    int8_t cmd = MQTT_Get_Data("\"light_state\"");
-//    if (cmd >= 0)
-//    {
-//        // 可忽略或根据云端命令调整
-//        // 例如云端设置手动亮度值，优先级可以更高（自行扩展）
-//				LED_SetBrightness(cmd);
-//    }
-}
-
-	 
-//	LED_PWM_Init();
-//	LED_SetBrightness(999);
-//	HAL_Delay(1000);
-//	LED_SetBrightness(0);
-// 以上完美执行
+	    // 4. 每20秒上传亮度到云端
+	    static uint32_t last_publish_timer = 0;
+	    if (HAL_GetTick() - last_publish_timer >= 20000)
+	    {
+	        last_publish_timer = HAL_GetTick();
+	        uint8_t percent = g_led_duty * 100 / 990;  // 0~999 -> 0~100
+	        MQTT_Publish_Data(percent);
+	    }
+		}
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  
-		
-		//ESP8266_PollReceive();
-    /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
-//		HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,GPIO_PIN_RESET);
-//		HAL_Delay(1000);
-//		HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,GPIO_PIN_SET);
-//		HAL_Delay(1000);
-//		以上完美执行
+  /* USER CODE END WHILE */
+
+  /* USER CODE BEGIN 3 */
 
   /* USER CODE END 3 */
 }
