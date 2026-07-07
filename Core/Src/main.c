@@ -166,17 +166,41 @@ int main(void)
 
 	    // 5. OLED实时状态刷新（1s间隔）
 	    static uint32_t last_oled_tick = 0;
+	    static uint32_t uptime = 0;
 	    if (HAL_GetTick() - last_oled_tick >= 1000)
 	    {
 	        last_oled_tick = HAL_GetTick();
-	        OLED_ShowString(1, 1, "Lux:     ");
-	        OLED_ShowNum(1, 6, (uint32_t)sensor.lux, 5);
-	        OLED_ShowString(2, 1, "LED:%   ");
-	        OLED_ShowNum(2, 6, g_led_duty * 100 / 999, 3);
+	        uptime++;
+
+	        /* 第1行：运行时间 + 光照值 */
+	        OLED_ShowString(1, 1, "T:");
+	        OLED_ShowNum(1, 3, uptime, 5);
+	        OLED_ShowString(1, 9, "L:");
+	        OLED_ShowNum(1, 11, (uint32_t)sensor.lux, 5);
+
+	        /* 第2行：LED亮度 */
+	        OLED_ShowString(2, 1, "LED:");
+	        OLED_ShowNum(2, 5, g_led_duty * 100 / 999, 3);
+	        OLED_ShowString(2, 8, "% ");
+
+	        /* 第3行：人体检测 */
 	        OLED_ShowString(3, 1, "Human:");
 	        OLED_ShowString(3, 8, sensor.human_present ? "YES" : "NO ");
+
+	        /* 第4行：云端状态 */
 	        OLED_ShowString(4, 1, "Cloud:");
 	        OLED_ShowString(4, 8, Cloud_IsConnected() ? "OK " : "ERR");
+
+	        /* 串口同步打印关键值，方便调试 */
+	        {
+	            char dbg[64];
+	            snprintf(dbg, sizeof(dbg), "T:%lu Lux:%.1f LED:%d%% Human:%d Cloud:%d\r\n",
+	                uptime, (double)sensor.lux,
+	                (int)(g_led_duty * 100 / 999),
+	                sensor.human_present,
+	                Cloud_IsConnected());
+	            HAL_UART_Transmit(&huart1, (uint8_t *)dbg, strlen(dbg), HAL_MAX_DELAY);
+	        }
 	    }
 		}
 
