@@ -23,12 +23,14 @@
 /* USER CODE BEGIN Includes */
 #include "stm32f4xx_it.h"
 #include "OLED.h"
-#include "BH1750.h"
 #include "led_pwm.h"
-#include "esp8266.h"
 #include "ld2402_uart.h"
 #include "delay.h"
 #include "app_state.h"
+#include "BH1750.h"
+#include "sensors.h"
+#include "light_controller.h"
+#include "cloud_comm.h"
 #include <string.h>
 #include <stdio.h>
 /* USER CODE END Includes */
@@ -106,64 +108,61 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-		HAL_UART_Receive_IT(&huart3, &rx_buf[0], 1);  // 雷达
+		/* 硬件初始化 */
+		HAL_UART_Receive_IT(&huart3, &rx_buf[0], 1);  // 雷达UART接收
 		OLED_Init();                                    // OLED初始化
-		LED_PWM_Init();                                 // PWM灯泡输出
+		LED_PWM_Init();                                 // PWM输出
 		BH1750_Init();                                  // 光照传感器
 
-		ESP8266_Init();
-		if (ESP8266_Init_Success)
-		{
-			MQTT_Init();
-	    last_publish_tick = HAL_GetTick();
-		}
+		/* 独立看门狗初始化（~2s超时） */
+		RCC->CSR |= RCC_CSR_LSION;          // 启用LSI
+		while (!(RCC->CSR & RCC_CSR_LSIRDY)); // 等待LSI就绪
+		IWDG->KR = 0x5555;    // 解除写保护
+		IWDG->PR = 0x04;      // 64分频, LSI=32kHz -> 500Hz
+		IWDG->RLR = 1000;     // 1000 ticks -> 2s超时
+		IWDG->KR = 0xCCCC;    // 启动IWDG
 
+		/* 云端连接 */
+		Cloud_Init();
+
+		/* 主循环 */
 		while (1)
 		{
-	    // 1. 轮询ESP8266接收 + 雷达数据解析（非阻塞）
+	    IWDG->KR = 0xAAAA;  // 喂狗
+
+	    // 1. I/O轮询（必须尽可能频繁调用）
 	    ESP8266_PollReceive();
 	    LD2402_ParseData();
 
-	    // 2. 每200ms刷新传感器数据
-	    static uint32_t last_sensor_tick = 0;
-	    if (HAL_GetTick() - last_sensor_tick >= 200)
+	    // 2. 传感器采集 + 亮度控制
+	    SensorData_t sensor;
+	    Sensors_ReadAll(&sensor);
+	    uint16_t target = LightCtrl_Update(&sensor);
+	    if (target != g_led_duty)
 	    {
-	        last_sensor_tick = HAL_GetTick();
-	        g_lux = bh_data_read();
-	        // ld24_data.xxx 和 g_face_detected 由中断/parse更新
+	        g_led_duty = target;
+	        LED_SetBrightness(target);
 	    }
 
-	    // 3. 计算目标亮度
-	    uint16_t base_duty = 0;
-	    if (g_lux < 80)          base_duty = 999 * 70 / 100;
-	    else if (g_lux < 120)    base_duty = 999 * 50 / 100;
-	    else if (g_lux < 170)    base_duty = 999 * 30 / 100;
-	    else                     base_duty = 0;
+	    // 3. 云端上传（内部20s节流）
+	    Cloud_Upload(g_led_duty * 100 / 990);
 
-	    // 雷达检测到人且有人脸时额外增加30%
-	    uint16_t extra_duty = 0;
-	    if (ld24_data.human_state != HUMAN_NONE && g_face_detected)
+	    // 4. 断线重连（内部30s间隔限制）
+	    Cloud_TryReconnect();
+
+	    // 5. OLED实时状态刷新（1s间隔）
+	    static uint32_t last_oled_tick = 0;
+	    if (HAL_GetTick() - last_oled_tick >= 1000)
 	    {
-	        extra_duty = 999 * 30 / 100;
-	    }
-
-	    uint16_t target_duty = base_duty + extra_duty;
-	    if (target_duty > 999) target_duty = 999;
-
-	    // 仅在亮度变化时设置PWM
-	    if (target_duty != g_led_duty)
-	    {
-	        g_led_duty = target_duty;
-	        LED_SetBrightness(g_led_duty);
-	    }
-
-	    // 4. 每20秒上传亮度到云端
-	    static uint32_t last_publish_timer = 0;
-	    if (HAL_GetTick() - last_publish_timer >= 20000)
-	    {
-	        last_publish_timer = HAL_GetTick();
-	        uint8_t percent = g_led_duty * 100 / 990;  // 0~999 -> 0~100
-	        MQTT_Publish_Data(percent);
+	        last_oled_tick = HAL_GetTick();
+	        OLED_ShowString(1, 1, "Lux:     ");
+	        OLED_ShowNum(1, 6, (uint32_t)sensor.lux, 5);
+	        OLED_ShowString(2, 1, "LED:%   ");
+	        OLED_ShowNum(2, 6, g_led_duty * 100 / 999, 3);
+	        OLED_ShowString(3, 1, "Human:");
+	        OLED_ShowString(3, 8, sensor.human_present ? "YES" : "NO ");
+	        OLED_ShowString(4, 1, "Cloud:");
+	        OLED_ShowString(4, 8, Cloud_IsConnected() ? "OK " : "ERR");
 	    }
 		}
 
