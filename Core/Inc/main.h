@@ -67,6 +67,10 @@ void Error_Handler(void);
 #define ESP_RST_GPIO_Port GPIOD
 #define ESP_CH_PD_Pin GPIO_PIN_6
 #define ESP_CH_PD_GPIO_Port GPIOC
+#define K210_TX_Pin GPIO_PIN_10
+#define K210_TX_GPIO_Port GPIOC
+#define K210_RX_Pin GPIO_PIN_11
+#define K210_RX_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 

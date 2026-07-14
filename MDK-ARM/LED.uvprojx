@@ -463,6 +463,16 @@
               <FileType>1</FileType>
               <FilePath>..\Core\Src\light_controller.c</FilePath>
             </File>
+            <File>
+              <FileName>k210_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\k210_uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>web_server.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\web_server.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

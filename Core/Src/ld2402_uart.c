@@ -5,71 +5,202 @@
 #include <stdlib.h>
 #include "main.h"
 #include "led_pwm.h"
-#define RX_TIMEOUT_MS  180   // 超过180ms无新字节视为帧结束
+
+#define DEVIATION_THRESHOLD  6     // 偏离背景阈值(cm)，越小越灵敏
+#define STABLE_TIME_MS        12000 // 回到背景后稳定多久算无人(ms)，12秒
+#define MIN_HUMAN_HOLD_MS     3000  // 一旦检测到人，至少保持3秒（防闪烁）
+#define BG_LEARN_SAMPLES      30    // 启动时采集样本数
 
 extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart1;
 
-// 接收缓冲区
-uint8_t rx_buf[64];
-uint8_t rx_idx;
-volatile uint32_t rx_last_time;   // 最后一次收到字节的时间戳
+uint8_t  rx_buf[128];
+uint8_t  rx_idx;
+volatile uint32_t rx_last_time;
+
+static uint8_t  bg_learn_count = 0;
+static uint16_t bg_learn_min  = 0xFFFF;
+static uint8_t  bg_ready      = 0;
 
 void LD2402_UART_Init(void)
 {
     memset(rx_buf, 0, sizeof(rx_buf));
     rx_idx = 0;
-		rx_last_time = HAL_GetTick();
-    ld24_data.human_state = HUMAN_NONE;
-    ld24_data.distance = 0;
-    // 启动单次字节中断接收
+    rx_last_time = HAL_GetTick();
+    g_app.radar.human_state = HUMAN_NONE;
+    g_app.radar.distance = 0;
+    g_app.radar.bg_distance = 0;
+    g_app.radar.bg_stable_since = 0;
+    bg_learn_count = 0;
+    bg_learn_min = 0xFFFF;
+    bg_ready = 0;
     HAL_UART_Receive_IT(&huart3, rx_buf, 1);
 }
 
-// 串口接收中断回调
 void LD2402_UART_RxProcess(void)
 {
-	rx_last_time = HAL_GetTick();       // 更新最后接收时间
-	rx_idx++;                           // 先递增，表示已成功存入一个字节
-	if(rx_idx >= sizeof(rx_buf))        // 防溢出（保留最后一个位置给'\0'）
-	{
-			rx_idx = 0;                     // 环形覆盖或清空（这里采用清空从头开始）
-			memset(rx_buf, 0, sizeof(rx_buf));
-	}
-	// 启动下一次接收，使用当前索引位置
-	HAL_UART_Receive_IT(&huart3, &rx_buf[rx_idx], 1);
-
+    rx_last_time = HAL_GetTick();
+    rx_idx++;
+    if (rx_idx >= sizeof(rx_buf))
+    {
+        rx_idx = 0;
+        memset(rx_buf, 0, sizeof(rx_buf));
+    }
+    HAL_UART_Receive_IT(&huart3, &rx_buf[rx_idx], 1);
 }
 
 void LD2402_ParseData(void)
 {
-    if(rx_idx == 0) return;
-    
     uint32_t now = HAL_GetTick();
-    if((now - rx_last_time) < RX_TIMEOUT_MS)
+
+    // 心跳诊断：每秒打印缓冲区状态
     {
-        return;   // 还在接收中，不处理
-    }
-    
-    // 补字符串结束符
-    rx_buf[rx_idx] = '\0';
-    
-    // 识别报文（只检测关键字，不关心长度）
-    if(strstr((char*)rx_buf, "distance") != NULL)
-    {
-        ld24_data.human_state = HUMAN_MOVE;
-        // 可以进一步提取距离数值，例如：
-        char *p = strstr((char*)rx_buf, "distance: ");
-        if(p) {
-            ld24_data.distance = atoi(p + 10); // 跳过"distance: "
+        static uint32_t last_hb = 0;
+        if (now - last_hb >= 1000)
+        {
+            last_hb = now;
+            char dbg[48];
+            snprintf(dbg, sizeof(dbg), "[HB] rx_idx=%d bg_ready=%d state=%d\r\n",
+                rx_idx, bg_ready, g_app.radar.human_state);
+            HAL_UART_Transmit(&huart1, (uint8_t *)dbg, strlen(dbg), HAL_MAX_DELAY);
         }
     }
-    else if(strstr((char*)rx_buf, "OFF") != NULL)
+
+    while (rx_idx > 0)
     {
-        ld24_data.human_state = HUMAN_NONE;
-        ld24_data.distance = 0;
+        uint8_t i;
+        uint8_t *lf = NULL;
+        for (i = 0; i < rx_idx; i++)
+        {
+            if (rx_buf[i] == '\n' || rx_buf[i] == '\r')
+            {
+                lf = &rx_buf[i];
+                break;
+            }
+        }
+        if (lf == NULL)
+        {
+            if (rx_idx >= sizeof(rx_buf) - 2)
+            {
+                memset(rx_buf, 0, sizeof(rx_buf));
+                rx_idx = 0;
+            }
+            break;
+        }
+
+        *lf = '\0';
+        if ((char *)rx_buf != (char *)lf)
+        {
+            char *line = (char *)rx_buf;
+
+            if (strstr(line, "distance") != NULL)
+            {
+                char *p = strstr(line, "distance:");
+                if (p)
+                {
+                    uint16_t cur_dist = (uint16_t)atoi(p + 9);  // 跳过"distance:"
+                    g_app.radar.distance = cur_dist;
+
+                    // === 背景学习 ===
+                    if (!bg_ready)
+                    {
+                        if (cur_dist < bg_learn_min)
+                            bg_learn_min = cur_dist;
+                        bg_learn_count++;
+
+                        if (bg_learn_count >= BG_LEARN_SAMPLES)
+                        {
+                            g_app.radar.bg_distance = bg_learn_min;
+                            bg_ready = 1;
+                            {
+                                char dbg[40];
+                                snprintf(dbg, sizeof(dbg), "[RADAR] BG=%dcm (N=%d)\r\n",
+                                    bg_learn_min, bg_learn_count);
+                                HAL_UART_Transmit(&huart1, (uint8_t *)dbg, strlen(dbg), HAL_MAX_DELAY);
+                            }
+                        }
+                        goto next_line;
+                    }
+
+                    // === 检测 ===
+                    int16_t dev = (int16_t)cur_dist - (int16_t)g_app.radar.bg_distance;
+                    if (dev < 0) dev = -dev;
+
+                    // 诊断：每秒最多打1次偏差明细
+                    {
+                        static uint32_t last_dev_print = 0;
+                        if (now - last_dev_print >= 1000)
+                        {
+                            last_dev_print = now;
+                            char dbg[48];
+                            snprintf(dbg, sizeof(dbg), "[DBG] cur=%d bg=%d dev=%d th=%d\r\n",
+                                cur_dist, g_app.radar.bg_distance, dev, DEVIATION_THRESHOLD);
+                            HAL_UART_Transmit(&huart1, (uint8_t *)dbg, strlen(dbg), HAL_MAX_DELAY);
+                        }
+                    }
+
+                    if (dev > DEVIATION_THRESHOLD)
+                    {
+                        g_app.radar.last_human_tick = now;
+                        if (g_app.radar.human_state == HUMAN_NONE)
+                        {
+                            // 无人→有人
+                            char dbg[32];
+                            snprintf(dbg, sizeof(dbg), "[RADAR] HUMAN=1 (dev=%d)\r\n", dev);
+                            HAL_UART_Transmit(&huart1, (uint8_t *)dbg, strlen(dbg), HAL_MAX_DELAY);
+                        }
+                        g_app.radar.human_state = HUMAN_MOVE;
+                        g_app.radar.bg_stable_since = 0;
+                    }
+                    else
+                    {
+                        // 有人状态才检测退场
+                        if (g_app.radar.human_state == HUMAN_MOVE)
+                        {
+                            // 防抖：刚检测到人时，保持至少 MIN_HUMAN_HOLD_MS
+                            if (now - g_app.radar.last_human_tick < MIN_HUMAN_HOLD_MS)
+                            {
+                                goto next_line;
+                            }
+
+                            if (g_app.radar.bg_stable_since == 0)
+                            {
+                                g_app.radar.bg_stable_since = now;
+                            }
+                            else if (now - g_app.radar.bg_stable_since >= STABLE_TIME_MS)
+                            {
+                                // 有人→无人
+                                char dbg[32];
+                                snprintf(dbg, sizeof(dbg), "[RADAR] HUMAN=0 (stable 12s)\r\n");
+                                HAL_UART_Transmit(&huart1, (uint8_t *)dbg, strlen(dbg), HAL_MAX_DELAY);
+                                g_app.radar.human_state = HUMAN_NONE;
+                                g_app.radar.bg_stable_since = 0;
+                            }
+                        }
+                    }
+                }
+            }
+
+next_line:
+            ;
+        }
+
+        uint8_t consumed = (uint8_t)(lf - rx_buf) + 1;
+        while (consumed < rx_idx && (rx_buf[consumed] == '\n' || rx_buf[consumed] == '\r'))
+        {
+            consumed++;
+        }
+        uint8_t remaining = rx_idx - consumed;
+        if (remaining > 0)
+        {
+            memmove(rx_buf, rx_buf + consumed, remaining);
+        }
+        rx_idx = remaining;
     }
-    
-    // 解析完清空缓存
-    memset(rx_buf, 0, sizeof(rx_buf));
-    rx_idx = 0;
+
+    if (rx_idx > 0 && (now - rx_last_time) >= 500)
+    {
+        memset(rx_buf, 0, sizeof(rx_buf));
+        rx_idx = 0;
+    }
 }

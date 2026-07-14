@@ -8,7 +8,8 @@
 typedef struct {
     float    lux;             // 环境光照(lux)
     uint8_t  human_present;   // 雷达检测到人体
-    uint8_t  face_detected;   // K210人脸识别
+    uint8_t  face_detected;   // K210人脸识别(兼容)
+    uint8_t  face_count;      // 人脸数量(0~N)
     uint16_t radar_distance;  // 雷达测距(cm)
 } SensorData_t;
 

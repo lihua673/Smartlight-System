@@ -31,6 +31,8 @@
 #include "sensors.h"
 #include "light_controller.h"
 #include "cloud_comm.h"
+#include "k210_uart.h"
+#include "web_server.h"
 #include <string.h>
 #include <stdio.h>
 /* USER CODE END Includes */
@@ -56,6 +58,7 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
+UART_HandleTypeDef huart4;
 
 /* USER CODE BEGIN PV */
 
@@ -68,6 +71,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_UART4_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -106,10 +110,12 @@ int main(void)
   MX_USART3_UART_Init();
   MX_TIM3_Init();
   MX_USART2_UART_Init();
+  MX_UART4_UART_Init();
   /* USER CODE BEGIN 2 */
 
 		/* 硬件初始化 */
-		HAL_UART_Receive_IT(&huart3, &rx_buf[0], 1);  // 雷达UART接收
+		LD2402_UART_Init();                             // 雷达UART接收
+		K210_UART_Init();                               // K210人脸检测UART接收
 
 		/* 启动诊断：PC0闪3次 + 串口输出（确认MCU在运行） */
 		{
@@ -126,10 +132,26 @@ int main(void)
 
 		OLED_Init();                                    // OLED初始化
 		LED_PWM_Init();                                 // PWM输出
+
+		/* PWM启动测试：LED闪3次（30%→60%→100%），确认硬件正常 */
+		{
+			const char *pwm_msg = "PWM: LED test 30%%->60%%->100%%\r\n";
+			HAL_UART_Transmit(&huart1, (uint8_t *)pwm_msg, strlen(pwm_msg), HAL_MAX_DELAY);
+			LED_SetBrightness(300);  HAL_Delay(300);
+			LED_SetBrightness(0);    HAL_Delay(200);
+			LED_SetBrightness(600);  HAL_Delay(300);
+			LED_SetBrightness(0);    HAL_Delay(200);
+			LED_SetBrightness(999);  HAL_Delay(300);
+			LED_SetBrightness(0);    // 关掉，等主循环接管
+		}
+
 		BH1750_Init();                                  // 光照传感器
 
 		/* 云端连接（耗时长，IWDG必须在之后启动否则超时复位） */
 		Cloud_Init();
+
+		/* Web控制面板（WiFi连接后启动TCP Server）*/
+		WebServer_Init();
 
 		/* 独立看门狗初始化（~4s超时，主循环喂狗） */
 		RCC->CSR |= RCC_CSR_LSION;          // 启用LSI
@@ -145,8 +167,9 @@ int main(void)
 	    IWDG->KR = 0xAAAA;  // 喂狗
 
 	    // 1. I/O轮询（必须尽可能频繁调用）
-	    ESP8266_PollReceive();
 	    LD2402_ParseData();
+	    K210_ParseFrame();
+		    WebServer_Poll();
 
 	    // 2. 传感器采集 + 亮度控制
 	    SensorData_t sensor;
@@ -154,6 +177,10 @@ int main(void)
 	    uint16_t target = LightCtrl_Update(&sensor);
 	    if (target != g_led_duty)
 	    {
+	        char duty_dbg[48];
+	        snprintf(duty_dbg, sizeof(duty_dbg), "LED: %d -> %d (lux=%.1f)\r\n",
+	            g_led_duty * 100 / 999, target * 100 / 999, (double)sensor.lux);
+	        HAL_UART_Transmit(&huart1, (uint8_t *)duty_dbg, strlen(duty_dbg), HAL_MAX_DELAY);
 	        g_led_duty = target;
 	        LED_SetBrightness(target);
 	    }
@@ -181,23 +208,32 @@ int main(void)
 	        /* 第2行：LED亮度 */
 	        OLED_ShowString(2, 1, "LED:");
 	        OLED_ShowNum(2, 5, g_led_duty * 100 / 999, 3);
-	        OLED_ShowString(2, 8, "% ");
+	        OLED_ShowString(2, 8, "% F:");
+	        OLED_ShowNum(2, 12, sensor.face_count, 1);
 
-	        /* 第3行：人体检测 */
-	        OLED_ShowString(3, 1, "Human:");
-	        OLED_ShowString(3, 8, sensor.human_present ? "YES" : "NO ");
+		        /* 第3行：人体检测 */
+		        OLED_ShowString(3, 1, "Human:");
+		        OLED_ShowString(3, 8, sensor.human_present ? "YES" : "NO ");
 
-	        /* 第4行：云端状态 */
-	        OLED_ShowString(4, 1, "Cloud:");
-	        OLED_ShowString(4, 8, Cloud_IsConnected() ? "OK " : "ERR");
+		        /* 第4行：IP地址(WebServer) / 云端状态 */
+		        {
+		            const char *ip = WebServer_GetIP();
+		            if (ip) {
+		                OLED_ShowString(4, 1, (char *)ip);
+		            } else {
+		                OLED_ShowString(4, 1, "Cloud:");
+		                OLED_ShowString(4, 8, Cloud_IsConnected() ? "OK " : "ERR");
+		            }
+		        }
 
 	        /* 串口同步打印关键值，方便调试 */
 	        {
 	            char dbg[64];
-	            snprintf(dbg, sizeof(dbg), "T:%lu Lux:%.1f LED:%d%% Human:%d Cloud:%d\r\n",
+	            snprintf(dbg, sizeof(dbg), "T:%lu Lux:%.1f LED:%d%% Human:%d Face:%d Cloud:%d\r\n",
 	                uptime, (double)sensor.lux,
 	                (int)(g_led_duty * 100 / 999),
 	                sensor.human_present,
+	            sensor.face_count,
 	                Cloud_IsConnected());
 	            HAL_UART_Transmit(&huart1, (uint8_t *)dbg, strlen(dbg), HAL_MAX_DELAY);
 	        }
@@ -416,6 +452,38 @@ static void MX_USART3_UART_Init(void)
   /* USER CODE BEGIN USART3_Init 2 */
 
   /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
+  * @brief UART4 Initialization Function (K210人脸检测)
+  * @param None
+  * @retval None
+  */
+static void MX_UART4_UART_Init(void)
+{
+
+  /* USER CODE BEGIN UART4_Init 0 */
+
+  /* USER CODE END UART4_Init 0 */
+
+  /* USER CODE BEGIN UART4_Init 1 */
+
+  /* USER CODE END UART4_Init 1 */
+  huart4.Instance = UART4;
+  huart4.Init.BaudRate = 115200;
+  huart4.Init.WordLength = UART_WORDLENGTH_8B;
+  huart4.Init.StopBits = UART_STOPBITS_1;
+  huart4.Init.Parity = UART_PARITY_NONE;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART4_Init 2 */
+  /* USER CODE END UART4_Init 2 */
 
 }
 

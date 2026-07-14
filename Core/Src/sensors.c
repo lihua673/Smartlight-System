@@ -16,5 +16,6 @@ void Sensors_ReadAll(SensorData_t *out)
     out->lux            = g_app.lux;
     out->human_present  = (g_app.radar.human_state != HUMAN_NONE) ? 1 : 0;
     out->face_detected  = g_app.face_detected;
+    out->face_count     = g_app.face_count;
     out->radar_distance = g_app.radar.distance;
 }

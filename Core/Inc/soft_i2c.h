@@ -24,14 +24,26 @@ uint8_t SoftI2C_WaitAck(SoftI2C_Bus_t *bus);
 void SoftI2C_Ack(SoftI2C_Bus_t *bus);
 void SoftI2C_NAck(SoftI2C_Bus_t *bus);
 
-/* GPIO方向快速切换（内联，直接寄存器操作） */
+/*
+ * GPIO方向快速切换（内联，直接寄存器操作）
+ * bus->sda_pin 是GPIO_PIN_x掩码(如GPIO_PIN_6=0x0040)，需转为位号(0-15)计算MODER偏移
+ * pin_mask_to_pos在编译期常量输入时会被优化为编译期常量，零运行时开销
+ */
+static inline uint32_t pin_mask_to_pos(uint16_t mask) {
+    uint32_t pos = 0;
+    while ((mask & 1) == 0) { mask >>= 1; pos++; }
+    return pos;
+}
+
 static inline void SoftI2C_SDA_Out(SoftI2C_Bus_t *bus) {
-    bus->sda_port->MODER = (bus->sda_port->MODER & ~(0x3 << (bus->sda_pin * 2)))
-                         | (0x1 << (bus->sda_pin * 2));
+    uint32_t pos = pin_mask_to_pos(bus->sda_pin);
+    bus->sda_port->MODER = (bus->sda_port->MODER & ~(0x3 << (pos * 2)))
+                         | (0x1 << (pos * 2));
 }
 
 static inline void SoftI2C_SDA_In(SoftI2C_Bus_t *bus) {
-    bus->sda_port->MODER = (bus->sda_port->MODER & ~(0x3 << (bus->sda_pin * 2)));
+    uint32_t pos = pin_mask_to_pos(bus->sda_pin);
+    bus->sda_port->MODER = (bus->sda_port->MODER & ~(0x3 << (pos * 2)));
 }
 
 #endif

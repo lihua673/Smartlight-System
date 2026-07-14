@@ -13,3 +13,16 @@ MDK-ARM/Listings/
 
 # CubeMX 临时文件
 .mxproject
+
+# Keil MDK 编译产物
+MDK-ARM/LED/*.o
+MDK-ARM/LED/*.crf
+MDK-ARM/LED/*.d
+MDK-ARM/LED/*.dep
+MDK-ARM/LED/*.hex
+MDK-ARM/LED/*.map
+MDK-ARM/LED/*.lnp
+MDK-ARM/LED/*.htm
+MDK-ARM/LED/*.build_log.htm
+MDK-ARM/LED/*.axf
+MDK-ARM/LED/*.lib

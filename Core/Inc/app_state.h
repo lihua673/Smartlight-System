@@ -8,8 +8,11 @@
 typedef struct {
     /* 传感器数据 */
     float    lux;              // BH1750光照值(lux)
-    uint8_t  face_detected;    // K210人脸识别标志
+    uint8_t  face_detected;    // K210人脸识别标志(兼容)
+    uint8_t  face_count;       // K210人脸数量(0~N)
     uint16_t led_duty;         // 当前实际PWM占空比(0~999)
+    uint8_t  manual_mode;      // 0=自动模式, 1=手动模式
+    uint16_t manual_brightness;// 手动模式下的目标亮度(0~999)
 
     /* 雷达状态 */
     LD2402_Data_t radar;
@@ -27,6 +30,7 @@ typedef struct {
 
     /* 时间基准 */
     uint32_t last_publish_tick;  // 上次MQTT上传时间
+    char     esp_ip[16];         // ESP8266 IP地址
 } AppState_t;
 
 /* 全局状态实例 */
@@ -35,7 +39,10 @@ extern AppState_t g_app;
 /* 便捷别名（兼容旧代码） */
 #define g_lux               g_app.lux
 #define g_face_detected     g_app.face_detected
+#define g_face_count        g_app.face_count
 #define g_led_duty          g_app.led_duty
+#define g_manual_mode       g_app.manual_mode
+#define g_manual_brightness g_app.manual_brightness
 #define ESP8266_Init_Success g_app.wifi_ready
 #define ld24_data           g_app.radar
 #define last_publish_tick   g_app.last_publish_tick

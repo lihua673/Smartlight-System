@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 extern void ESP8266_UART_RxProcess(void);
 extern void LD2402_UART_RxProcess(void);
+extern void K210_UART_RxProcess(void);
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +61,7 @@ extern void LD2402_UART_RxProcess(void);
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart4;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -244,16 +246,34 @@ void USART3_IRQHandler(void)
   /* USER CODE END USART3_IRQn 1 */
 }
 
+/**
+  * @brief This function handles UART4 global interrupt.
+  */
+void UART4_IRQHandler(void)
+{
+  /* USER CODE BEGIN UART4_IRQn 0 */
+
+  /* USER CODE END UART4_IRQn 0 */
+  HAL_UART_IRQHandler(&huart4);
+  /* USER CODE BEGIN UART4_IRQn 1 */
+
+  /* USER CODE END UART4_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-//	if(huart->Instance == USART2)
-//	{
-//		ESP8266_UART_RxProcess();
-//	}
+	if(huart->Instance == USART2)
+	{
+		ESP8266_UART_RxProcess();
+	}
 	if(huart->Instance == USART3)
 	{
 		LD2402_UART_RxProcess();
+	}
+	if(huart->Instance == UART4)
+	{
+		K210_UART_RxProcess();
 	}
 }
 
