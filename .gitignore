@@ -26,3 +26,8 @@ MDK-ARM/LED/*.htm
 MDK-ARM/LED/*.build_log.htm
 MDK-ARM/LED/*.axf
 MDK-ARM/LED/*.lib
+MDK-ARM/LED/*.Bak
+
+# 个人学习与面试笔记（不公开）
+学习资料/
+MQTT原理详解.md
